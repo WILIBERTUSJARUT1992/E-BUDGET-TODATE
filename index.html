@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Monitoring Alat Berat KAP2</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#edf2f7;color:#172b40}
+header{background:#153a59;color:white;padding:18px}
+header h2{margin:0;font-size:20px}
+header small{display:block;margin-top:6px}
+main{padding:12px;max-width:1100px;margin:auto}
+.card{background:white;padding:15px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 8px #0001}
+h3{color:#164467;margin-top:0}
+input,select,textarea{width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ccd5df;border-radius:7px;font-size:14px}
+button{padding:10px 14px;background:#1671ad;color:white;border:0;border-radius:7px;margin:3px;cursor:pointer}
+button:disabled{opacity:.6}
+.red{background:#c0392b}.green{background:#16804b}.gray{background:#65758b}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+table{border-collapse:collapse;width:100%;min-width:850px;font-size:12px}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}
+th{background:#e8f1f8}
+.wrap{overflow:auto}
+.status{background:#e5f3ff;padding:10px;border-radius:7px;margin:8px 0;word-break:break-word}
+.hidden{display:none!important}
+img{max-width:100px;height:auto;border-radius:5px}
+label{font-size:13px;font-weight:bold}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+@media print{
+ button,input,select,textarea,#login,.no-print{display:none!important}
+ body{background:white}
+ .card{box-shadow:none}
+ table{min-width:0;font-size:10px}
+ th,td{padding:4px}
+ header{background:white;color:black}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h2>MONITORING ALAT BERAT</h2>
+<small>PT KAHAYAN AGRO PLANTATION (KAP2) · RAYON 01</small>
+</header>
+
+<main>
+
+<section id="login" class="card">
+<h3>Login Admin / Viewer</h3>
+<label>Email</label>
+<input id="email" type="email" autocomplete="username" placeholder="Email">
+<label>Password</label>
+<input id="password" type="password" autocomplete="current-password" placeholder="Password">
+<button onclick="loginUser()">LOGIN</button>
+<div id="loginMsg" class="status">Silakan login.</div>
+</section>
+
+<div id="app" class="hidden">
+
+<section class="card">
+<b id="userInfo"></b>
+<button class="gray" onclick="logout()">Keluar</button>
+<div id="msg" class="status">Siap.</div>
+</section>
+
+<section id="inputPanel" class="card">
+<h3>Monitoring Alat Berat</h3>
+
+<input type="hidden" id="mid">
+
+<label>Tanggal</label>
+<input type="date" id="date">
+
+<label>Divisi</label>
+<select id="division"></select>
+
+<label>Jenis Alat</label>
+<select id="equipment">
+<option value="">Pilih Alat</option>
+<option>Excavator</option>
+<option>Bulldozer</option>
+<option>Grader</option>
+<option>Compactor</option>
+<option>Dump Truck</option>
+<option>Traktor</option>
+<option>Water Truck</option>
+<option>Crane</option>
+<option>Lainnya</option>
+</select>
+
+<label>Lokasi / Blok</label>
+<input id="location" placeholder="Lokasi / Blok">
+
+<label>Jenis Pekerjaan</label>
+<input id="job" placeholder="Jenis pekerjaan">
+
+<label>Pengawas</label>
+<input id="supervisor" placeholder="Nama pengawas">
+
+<div class="grid">
+<div>
+<label>Jam Mulai</label>
+<input type="time" id="start">
+</div>
+<div>
+<label>Jam Akhir</label>
+<input type="time" id="end">
+</div>
+</div>
+
+<label>Total Jam Otomatis</label>
+<input id="hours" readonly>
+
+<label>Hasil Pekerjaan</label>
+<textarea id="result" placeholder="Hasil pekerjaan / meter / volume"></textarea>
+
+<label>Foto HM Awal</label>
+<input type="file" id="photo1" accept="image/*">
+
+<label>Foto HM Akhir</label>
+<input type="file" id="photo2" accept="image/*">
+
+<button onclick="saveMonitoring()">SIMPAN MONITORING</button>
+<button class="gray" onclick="resetMonitoring()">RESET</button>
+</section>
+
+<section id="docPanel" class="card">
+<h3>Dokumentasi Pekerjaan</h3>
+
+<input type="hidden" id="did">
+
+<label>Tanggal</label>
+<input type="date" id="ddate">
+
+<label>Divisi</label>
+<select id="ddivision"></select>
+
+<label>Jenis Alat</label>
+<input id="dequipment">
+
+<label>Lokasi / Blok</label>
+<input id="dlocation">
+
+<label>Jenis Pekerjaan</label>
+<input id="djob">
+
+<label>Pengawas</label>
+<input id="dsupervisor">
+
+<label>Catatan</label>
+<textarea id="dnotes"></textarea>
+
+<label>Foto Dokumentasi</label>
+<input type="file" id="dphoto" accept="image/*">
+
+<button onclick="saveDocumentation()">SIMPAN FOTO</button>
+<button class="gray" onclick="resetDoc()">RESET</button>
+</section>
+
+<section class="card">
+<h3>Arsip Laporan</h3>
+
+<label>Filter Divisi</label>
+<select id="filterDiv">
+<option value="">Semua Divisi</option>
+</select>
+
+<label>Filter Bulan</label>
+<input type="month" id="filterMonth">
+
+<label>Jenis Data</label>
+<select id="filterType">
+<option value="all">Semua</option>
+<option value="monitoring">Monitoring</option>
+<option value="documentation">Dokumentasi</option>
+</select>
+
+<input id="search" placeholder="Cari blok / alat / pekerjaan">
+
+<button onclick="loadData()">MUAT ULANG</button>
+<button class="green" onclick="exportCSV()">EXPORT EXCEL (CSV)</button>
+<button class="gray" onclick="window.print()">CETAK / PDF</button>
+
+<h3>Monitoring</h3>
+<div class="wrap">
+<table>
+<thead>
+<tr>
+<th>Tanggal</th><th>Divisi</th><th>Alat</th><th>Lokasi</th>
+<th>Pekerjaan</th><th>Jam</th><th>Hasil</th><th>Foto</th><th>Aksi</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+
+<h3>Dokumentasi</h3>
+<div class="wrap">
+<table>
+<thead>
+<tr>
+<th>Tanggal</th><th>Divisi</th><th>Alat</th><th>Lokasi</th>
+<th>Pekerjaan</th><th>Pengawas</th><th>Foto</th><th>Catatan</th><th>Aksi</th>
+</tr>
+</thead>
+<tbody id="drows"></tbody>
+</table>
+</div>
+</section>
+
+<section class="card">
+<h3>Pengesahan Laporan Bulanan</h3>
+
+<label>Bulan</label>
+<input type="month" id="apmonth">
+
+<label>Divisi</label>
+<select id="apdiv"></select>
+
+<label>Dibuat oleh — Asisten</label>
+<input id="assistant">
+
+<label>Diketahui — Askep</label>
+<input id="askep">
+
+<label>Disetujui — Manager</label>
+<input id="manager">
+
+<button onclick="printApproval()">CETAK PENGESAHAN</button>
+</section>
+
+</div>
+</main>
+
+<script type="module">
+
+import {initializeApp}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+getFirestore,doc,getDoc,collection,addDoc,getDocs,
+updateDoc,deleteDoc,serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyBR1eVPhqsrNblMhZtlsQProBT8aDqMCIw",
+authDomain:"aplikasi-dokumentasi-alat.firebaseapp.com",
+projectId:"aplikasi-dokumentasi-alat",
+storageBucket:"aplikasi-dokumentasi-alat.firebasestorage.app",
+messagingSenderId:"477325483032",
+appId:"1:477325483032:web:1c8ca661347336925e376d",
+measurementId:"G-ET6L7L2FZJ"
+};
+
+const CLOUD="qcprs3cv";
+const PRESET="kap2_monitoring_unsigned";
+
+const appFirebase=initializeApp(firebaseConfig);
+const auth=getAuth(appFirebase);
+const db=getFirestore(appFirebase);
+
+let user=null,profile=null,mon=[],docs=[];
+const $=id=>document.getElementById(id);
+
+const divs=Array.from({length:10},(_,i)=>
+"DIVISI_"+String(i+1).padStart(2,"0"));
+
+function fill(id,all=false){
+$(id).innerHTML=all?'<option value="">Semua Divisi</option>':'';
+divs.forEach(d=>{
+let o=document.createElement("option");
+o.value=d;
+o.textContent=d.replace("_"," ");
+$(id).appendChild(o);
+});
+}
+
+fill("division");
+fill("ddivision");
+fill("apdiv");
+fill("filterDiv",true);
+
+const today=new Date();
+const localDate=new Date(today.getTime()-today.getTimezoneOffset()*60000)
+.toISOString().slice(0,10);
+
+$("date").value=$("ddate").value=localDate;
+$("filterMonth").value=$("apmonth").value=localDate.slice(0,7);
+
+function msg(t){$("msg").textContent=t}
+function admin(){return profile?.role==="admin"&&profile?.active===true}
+
+function esc(v){
+return String(v??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",
+'"':"&quot;","'":"&#39;"
+}[c]));
+}
+
+$("start").oninput=$("end").oninput=()=>{
+let a=$("start").value,b=$("end").value;
+if(!a||!b){$("hours").value="";return}
+let x=a.split(":").map(Number),y=b.split(":").map(Number);
+let n=(y[0]*60+y[1])-(x[0]*60+x[1]);
+if(n<0)n+=1440;
+$("hours").value=(n/60).toFixed(2)+" jam";
+};
+
+async function upload(file){
+if(!file)return "";
+if(file.size>8*1024*1024)throw Error("Foto maksimal 8 MB");
+
+let f=new FormData();
+f.append("file",file);
+f.append("upload_preset",PRESET);
+f.append("folder","monitoring-alat-berat");
+
+let r=await fetch(
+"https://api.cloudinary.com/v1_1/"+CLOUD+"/image/upload",
+{method:"POST",body:f}
+);
+
+let d=await r.json();
+if(!r.ok)throw Error(d.error?.message||"Upload foto gagal");
+return d.secure_url;
+}
+
+function col(d,c){
+return collection(db,"divisions",d,c);
+}
+
+/* LOGIN */
+
+async function loginUser(){
+const email=$("email").value.trim().toLowerCase();
+const password=$("password").value;
+const btn=document.querySelector("#login button");
+
+if(!email||!password){
+$("loginMsg").textContent="Email dan password wajib diisi.";
+return;
+}
+
+btn.disabled=true;
+btn.textContent="MEMERIKSA...";
+$("loginMsg").textContent="Menghubungkan ke Firebase...";
+
+try{
+await signInWithEmailAndPassword(auth,email,password);
+$("loginMsg").textContent="Login berhasil...";
+}catch(e){
+let pesan="Login gagal: "+e.code;
+
+if(e.code==="auth/invalid-credential"||
+e.code==="auth/wrong-password"||
+e.code==="auth/user-not-found"){
+pesan="Email atau password salah. Periksa akun Firebase Authentication.";
+}
+else if(e.code==="auth/unauthorized-domain"){
+pesan="Domain GitHub belum diizinkan di Firebase Authentication.";
+}
+else if(e.code==="auth/too-many-requests"){
+pesan="Terlalu banyak percobaan. Tunggu beberapa saat.";
+}
+else if(e.code==="auth/network-request-failed"){
+pesan="Internet bermasalah. Periksa koneksi.";
+}
+else{
+pesan=e.message;
+}
+$("loginMsg").textContent=pesan;
+}finally{
+btn.disabled=false;
+btn.textContent="LOGIN";
+}
+}
+window.loginUser=loginUser;
+
+/* KELUAR */
+
+window.logout=async()=>{
+try{
+await signOut(auth);
+$("password").value="";
+$("loginMsg").textContent="Silakan login kembali.";
+}catch(e){
+$("loginMsg").textContent=e.message;
+}
+};
+
+/* PEMERIKSAAN LOGIN DAN PROFIL */
+
+onAuthStateChanged(auth,async u=>{
+user=u;
+
+if(!u){
+$("login").classList.remove("hidden");
+$("app").classList.add("hidden");
+return;
+}
+
+$("loginMsg").textContent="Memeriksa profil...";
+try{
+let s=await getDoc(doc(db,"users",u.uid));
+
+if(!s.exists())throw Error("Profil tidak ditemukan. Periksa Firestore users.");
+profile=s.data();
+
+if(profile.active!==true)
+throw Error("Akun tidak aktif. Periksa profil Firestore.");
+
+if(!["admin","viewer"].includes(profile.role))
+throw Error("Role tidak valid. Gunakan admin atau viewer.");
+
+$("login").classList.add("hidden");
+$("app").classList.remove("hidden");
+
+$("userInfo").textContent=(profile.name||u.email)+" | "+profile.role.toUpperCase();
+
+if(!admin()){
+$("inputPanel").classList.add("hidden");
+$("docPanel").classList.add("hidden");
+}else{
+$("inputPanel").classList.remove("hidden");
+$("docPanel").classList.remove("hidden");
+}
+
+await loadData();
+
+}catch(e){
+$("login").classList.remove("hidden");
+$("app").classList.add("hidden");
+$("loginMsg").textContent="Gagal membuka profil: "+e.message;
+await signOut(auth);
+}
+});
+
+/* RESET MONITORING */
+
+window.resetMonitoring=()=>{
+$("mid").value="";
+["equipment","location","job","supervisor","start","end","hours","result"]
+.forEach(x=>$(x).value="");
+$("photo1").value=$("photo2").value="";
+$("date").value=localDate;
+$("division").value="DIVISI_01";
+};
+
+/* SIMPAN MONITORING */
+
+window.saveMonitoring=async()=>{
+if(!admin())return;
+
+try{
+msg("Mengunggah foto dan menyimpan...");
+
+let id=$("mid").value;
+let div=$("division").value;
+let old=mon.find(x=>x.id===id);
+
+let p1=$("photo1").files[0]?await upload($("photo1").files[0]):old?.photo1||"";
+let p2=$("photo2").files[0]?await upload($("photo2").files[0]):old?.photo2||"";
+
+let data={
+date:$("date").value,
+division:div,
+equipment:$("equipment").value,
+location:$("location").value,
+job:$("job").value,
+supervisor:$("supervisor").value,
+start:$("start").value,
+end:$("end").value,
+hours:Number(($("hours").value||"0").replace(" jam","")),
+result:$("result").value,
+photo1:p1,photo2:p2,
+updatedAt:serverTimestamp()
+};
+
+if(!data.date||!data.equipment||!data.location||!data.job){
+throw Error("Tanggal, alat, lokasi dan pekerjaan wajib diisi.");
+}
+
+if(id){
+if(old&&old.division!==div){
+await deleteDoc(doc(db,"divisions",old.division,"monitoring",id));
+await addDoc(col(div,"monitoring"),{...data,createdAt:serverTimestamp()});
+}else{
+await updateDoc(doc(db,"divisions",div,"monitoring",id),data);
+}
+}else{
+await addDoc(col(div,"monitoring"),{...data,createdAt:serverTimestamp()});
+}
+
+resetMonitoring();
+await loadData();
+msg("Monitoring berhasil disimpan.");
+}catch(e){
+msg("Gagal: "+e.message);
+}
+};
+
+/* RESET DOKUMENTASI */
+
+window.resetDoc=()=>{
+$("did").value="";
+["dequipment","dlocation","djob","dsupervisor","dnotes"]
+.forEach(x=>$(x).value="");
+$("dphoto").value="";
+$("ddate").value=localDate;
+$("ddivision").value="DIVISI_01";
+};
+
+/* SIMPAN DOKUMENTASI */
+
+window.saveDocumentation=async()=>{
+if(!admin())return;
+
+try{
+msg("Mengunggah foto dokumentasi...");
+
+let id=$("did").value,div=$("ddivision").value;
+let old=docs.find(x=>x.id===id);
+let p=$("dphoto").files[0]?await upload($("dphoto").files[0]):old?.photo||"";
+
+if(!p)throw Error("Foto wajib dipilih.");
+
+let data={
+date:$("ddate").value,
+division:div,
+equipment:$("dequipment").value,
+location:$("dlocation").value,
+job:$("djob").value,
+supervisor:$("dsupervisor").value,
+notes:$("dnotes").value,
+photo:p,
+updatedAt:serverTimestamp()
+};
+
+if(!data.date||!data.location||!data.job){
+throw Error("Tanggal, lokasi dan pekerjaan wajib diisi.");
+}
+
+if(id){
+if(old&&old.division!==div){
+await deleteDoc(doc(db,"divisions",old.division,"documentation",id));
+await addDoc(col(div,"documentation"),{...data,createdAt:serverTimestamp()});
+}else{
+await updateDoc(doc(db,"divisions",div,"documentation",id),data);
+}
+}else{
+await addDoc(col(div,"documentation"),{...data,createdAt:serverTimestamp()});
+}
+
+resetDoc();
+await loadData();
+msg("Dokumentasi berhasil disimpan.");
+}catch(e){
+msg("Gagal: "+e.message);
+}
+};
+
+/* LOAD DATA */
+
+window.loadData=async()=>{
+if(!user)return;
+
+try{
+msg("Mengambil arsip...");
+mon=[];docs=[];
+
+for(let d of divs){
+let a=await getDocs(col(d,"monitoring"));
+a.forEach(s=>mon.push({id:s.id,division:d,...s.data()}));
+
+let b=await getDocs(col(d,"documentation"));
+b.forEach(s=>docs.push({id:s.id,division:d,...s.data()}));
+}
+
+mon.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+docs.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+
+render();
+msg("Arsip berhasil dimuat.");
+}catch(e){
+msg("Gagal memuat data: "+e.message);
+}
+};
+
+/* FILTER */
+
+function filt(arr){
+let d=$("filterDiv").value;
+let m=$("filterMonth").value;
+let q=$("search").value.toLowerCase();
+
+return arr.filter(x=>
+(!d||x.division===d)&&
+(!m||(x.date||"").startsWith(m))&&
+(!q||[
+x.location,x.equipment,x.job,x.result,x.notes,x.supervisor
+].join(" ").toLowerCase().includes(q))
+);
+}
+
+$("filterDiv").onchange=
+$("filterMonth").oninput=
+$("search").oninput=
+$("filterType").onchange=render;
+
+/* AKSI */
+
+function act(id,type){
+return admin()?
+`<button onclick="editData('${type}','${id}')">Edit</button>
+<button class="red" onclick="delData('${type}','${id}')">Hapus</button>`:
+"";
+}
+
+/* TAMPIL ARSIP */
+
+function render(){
+let m=filt(mon),d=filt(docs),type=$("filterType").value;
+
+$("rows").innerHTML=(type==="documentation"?[]:m).map(x=>`
+<tr>
+<td>${esc(x.date)}</td>
+<td>${esc(x.division)}</td>
+<td>${esc(x.equipment)}</td>
+<td>${esc(x.location)}</td>
+<td>${esc(x.job)}</td>
+<td>${esc(x.start)} - ${esc(x.end)}<br>${esc(x.hours||0)} jam</td>
+<td>${esc(x.result)}</td>
+<td>
+${x.photo1?`<a target="_blank" rel="noopener" href="${esc(x.photo1)}">HM Awal</a>`:""}
+<br>
+${x.photo2?`<a target="_blank" rel="noopener" href="${esc(x.photo2)}">HM Akhir</a>`:""}
+</td>
+<td>${act(x.id,"m")}</td>
+</tr>`).join("")||"<tr><td colspan='9'>Tidak ada data.</td></tr>";
+
+$("drows").innerHTML=(type==="monitoring"?[]:d).map(x=>`
+<tr>
+<td>${esc(x.date)}</td>
+<td>${esc(x.division)}</td>
+<td>${esc(x.equipment)}</td>
+<td>${esc(x.location)}</td>
+<td>${esc(x.job)}</td>
+<td>${esc(x.supervisor)}</td>
+<td>
+${x.photo?`<a target="_blank" rel="noopener" href="${esc(x.photo)}"><img src="${esc(x.photo)}" alt="Foto"></a>`:""}
+</td>
+<td>${esc(x.notes)}</td>
+<td>${act(x.id,"d")}</td>
+</tr>`).join("")||"<tr><td colspan='9'>Tidak ada data.</td></tr>";
+}
+
+/* EDIT DATA */
+
+window.editData=(type,id)=>{
+if(!admin())return;
+
+if(type==="m"){
+let x=mon.find(v=>v.id===id);
+if(!x)return;
+
+$("mid").value=id;
+["date","division","equipment","location","job","supervisor","start","end","result"]
+.forEach(k=>$(k).value=x[k]||"");
+$("hours").value=(x.hours||0)+" jam";
+window.scrollTo({top:0,behavior:"smooth"});
+}else{
+let x=docs.find(v=>v.id===id);
+if(!x)return;
+
+$("did").value=id;
+$("ddate").value=x.date||"";
+$("ddivision").value=x.division||"DIVISI_01";
+$("dequipment").value=x.equipment||"";
+$("dlocation").value=x.location||"";
+$("djob").value=x.job||"";
+$("dsupervisor").value=x.supervisor||"";
+$("dnotes").value=x.notes||"";
+window.scrollTo({top:0,behavior:"smooth"});
+}
+};
+
+/* HAPUS DATA */
+
+window.delData=async(type,id)=>{
+if(!admin()||!confirm("Yakin ingin menghapus data ini?"))return;
+
+try{
+let arr=type==="m"?mon:docs;
+let x=arr.find(v=>v.id===id);
+if(!x)return;
+
+await deleteDoc(doc(db,"divisions",x.division,
+type==="m"?"monitoring":"documentation",id));
+
+await loadData();
+msg("Data berhasil dihapus.");
+}catch(e){
+msg("Gagal menghapus: "+e.message);
+}
+};
+
+/* EXPORT CSV */
+
+window.exportCSV=()=>{
+let rows=[[
+"Jenis","Tanggal","Divisi","Alat","Lokasi","Pekerjaan",
+"Pengawas","Mulai","Akhir","Jam","Hasil/Catatan","Foto 1","Foto 2"
+]];
+
+filt(mon).forEach(x=>rows.push([
+"Monitoring",x.date,x.division,x.equipment,x.location,
+x.job,x.supervisor,x.start,x.end,x.hours,x.result,x.photo1,x.photo2
+]));
+
+filt(docs).forEach(x=>rows.push([
+"Dokumentasi",x.date,x.division,x.equipment,x.location,
+x.job,x.supervisor,"","","",x.notes,x.photo,""
+]));
+
+let csv="\uFEFF"+rows.map(r=>r.map(v=>
+'"'+String(v??"").replace(/"/g,'""')+'"'
+).join(",")).join("\n");
+
+let a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+a.download="Laporan_Monitoring_KAP2.csv";
+a.click();
+URL.revokeObjectURL(a.href);
+};
+
+/* PENGESAHAN */
+
+window.printApproval=()=>{
+let w=window.open("","_blank");
+if(!w){
+alert("Izinkan popup untuk mencetak pengesahan.");
+return;
+}
+
+let bulan=esc($("apmonth").value);
+let div=esc($("apdiv").value);
+let asisten=esc($("assistant").value);
+let askep=esc($("askep").value);
+let manager=esc($("manager").value);
+
+w.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pengesahan Laporan</title>
+<meta charset="UTF-8">
+<style>
+body{font-family:Arial;padding:30px}
+h2{text-align:center}
+.sign{display:flex;justify-content:space-around;text-align:center;margin-top:100px}
+.sign div{width:30%}
+@media(max-width:600px){.sign{gap:20px}}
+</style>
+</head>
+<body>
+<h2>PENGESAHAN LAPORAN MONITORING</h2>
+<p>PT KAHAYAN AGRO PLANTATION (KAP2)</p>
+<p>RAYON 01</p>
+<p>Bulan: ${bulan} | ${div}</p>
+<div class="sign">
+<div>Dibuat oleh<br>Asisten<br><br><br><br>${asisten}</div>
+<div>Diketahui<br>Askep<br><br><br><br>${askep}</div>
+<div>Disetujui<br>Manager<br><br><br><br>${manager}</div>
+</div>
+</body>
+</html>
+`);
+
+w.document.close();
+w.focus();
+setTimeout(()=>w.print(),500);
+};
+
+</script>
+</body>
+</html>
